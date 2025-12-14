@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include "lib.h"
@@ -13,12 +14,13 @@ int encrypt(int argc, char** argv, skey s) {
     printf("Input not a file or directory\n");
     return 1;
   }
+  int output_file_type;
   char* output_path = shift(&argc, &argv);
   if (output_path == NULL_STR) {
     printf("Missing output\n");
     return 1;
   }
-  if ((file_type = check_path_type(output_path)) != path_type_unknown) {
+  if ((output_file_type = check_path_type(output_path)) != path_type_unknown) {
     printf("A file or directory already exists with the same name as output");
     return 1;
   }
@@ -27,14 +29,17 @@ int encrypt(int argc, char** argv, skey s) {
   handle_input(input_path, file_type, buffer_fd);
   lseek(buffer_fd, 0, SEEK_SET);
 
-  // int num_read;
-  // char buf[1024];
-  // while ((num_read = read(buffer_fd, buf, 1024)) > 0) {
-  //   for (int i = 0; i < 100; i++)
-  //     printf("%c (%d)\n", buf[i], buf[i]);
-  // }
+  FILE* f = fopen("temp", "wb");
+  int num_read;
+  char buf[1024];
+  while ((num_read = read(buffer_fd, buf, 1024)) > 0) {
+    fwrite(buf, 1, 1024, f);
+    // for (int i = 0; i < 100; i++)
+      // printf("%c (%d)\n", buf[i], buf[i]);
+  }
   // printf("\n");
-  // lseek(buffer_fd, 0, SEEK_SET);
+  fclose(f);
+  lseek(buffer_fd, 0, SEEK_SET);
 
   FILE* encrypted_fd = fopen(output_path, "wb");
   encrypt_file(buffer_fd, fileno(encrypted_fd), s);
@@ -167,6 +172,7 @@ int source_main(int argc, char** argv) {
 int main(int argc, char** argv) {
   int result = source_main(argc, argv);
   if (result != 0) {
+    printf("\n");
     help();
   }
   return result;

@@ -14,3 +14,4 @@ else()
 endif()
 
 target_link_libraries(vaulter ssl crypto)
+target_compile_options(vaulter PRIVATE -Ofast)
