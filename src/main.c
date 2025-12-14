@@ -29,16 +29,16 @@ int encrypt(int argc, char** argv, skey s) {
   handle_input(input_path, file_type, buffer_fd);
   lseek(buffer_fd, 0, SEEK_SET);
 
-  FILE* f = fopen("temp", "wb");
-  int num_read;
-  char buf[1024];
-  while ((num_read = read(buffer_fd, buf, 1024)) > 0) {
-    fwrite(buf, 1, 1024, f);
+  // FILE* f = fopen("temp", "wb");
+  // int num_read;
+  // char buf[1024];
+  // while ((num_read = read(buffer_fd, buf, 1024)) > 0) {
+    // fwrite(buf, 1, 1024, f);
     // for (int i = 0; i < 100; i++)
       // printf("%c (%d)\n", buf[i], buf[i]);
-  }
+  // }
   // printf("\n");
-  fclose(f);
+  // fclose(f);
   lseek(buffer_fd, 0, SEEK_SET);
 
   FILE* encrypted_fd = fopen(output_path, "wb");
