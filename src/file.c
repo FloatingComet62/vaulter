@@ -53,19 +53,19 @@ void handle_input_file(
   fclose(input_fd);
 }
 
-void push(char directories[1024][1024], int cursor, const char* to_add) {
+void push(char directories[PATH_MAX][PATH_MAX], int cursor, const char* to_add) {
   int i = 0;
   for (; to_add[i] != 0; i++) {
     directories[cursor][i] = to_add[i];
   }
-  while (i < 1024) {
+  while (i < PATH_MAX) {
     directories[cursor][i++] = 0;
   }
 }
 
 void handle_input_directory(const char* input_path, int buffer_fd) {
   int cursor = 0;
-  char directories[1024][1024] = {0};
+  char directories[PATH_MAX][PATH_MAX] = {0};
   push(directories, cursor, input_path);
   int input_shift = strlen(input_path) + 1;
   while (cursor != -1) {
