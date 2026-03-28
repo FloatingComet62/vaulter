@@ -102,6 +102,7 @@ void handle_input_directory(const char* input_path, int buffer_fd) {
       }
       push(directories, ++cursor, full_path);
     }
+    closedir(dir_ptr);
   }
 }
 

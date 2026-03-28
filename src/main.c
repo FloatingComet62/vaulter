@@ -3,6 +3,8 @@
 #include <time.h>
 #include "lib.h"
 
+#define VERSION "1.0"
+
 int encrypt(int argc, char** argv, skey s) {
   char* input_path = shift(&argc, &argv);
   if (input_path == NULL_STR) {
@@ -27,18 +29,6 @@ int encrypt(int argc, char** argv, skey s) {
 
   int buffer_fd = syscall(__NR_memfd_create, "buffer", 0x0001U);
   handle_input(input_path, file_type, buffer_fd);
-  lseek(buffer_fd, 0, SEEK_SET);
-
-  // FILE* f = fopen("temp", "wb");
-  // int num_read;
-  // char buf[1024];
-  // while ((num_read = read(buffer_fd, buf, 1024)) > 0) {
-    // fwrite(buf, 1, 1024, f);
-    // for (int i = 0; i < 100; i++)
-      // printf("%c (%d)\n", buf[i], buf[i]);
-  // }
-  // printf("\n");
-  // fclose(f);
   lseek(buffer_fd, 0, SEEK_SET);
 
   FILE* encrypted_fd = fopen(output_path, "wb");
@@ -75,15 +65,6 @@ int decrypt(int argc, char** argv, skey s) {
   lseek(buffer_fd, 0, SEEK_SET);
   fclose(encrypted_fd);
 
-  // int num_read;
-  // char buf[1024] = {0};
-  // while ((num_read = read(buffer_fd, buf, 1024)) > 0) {
-  //   for (int i = 0; i < 100; i++)
-  //     printf("%c (%d)\n", buf[i], buf[i]);
-  // }
-  // printf("\n");
-  // lseek(buffer_fd, 0, SEEK_SET);
-
   handle_output(output_path, buffer_fd);
 
   return 0;
@@ -111,13 +92,23 @@ void save_key(const char* key_path, skey* s) {
 }
 
 void help() {
-  printf("Vaulter - 1.0\n");
-  printf("Encrypt files or directories with ease\n");
-  printf("Usage:\n");
-  printf("\tvaulter encrypt <key-path> <target> <output file> - Encrypt target, target can be either file or directory\n");
-  printf("\tvaulter decrypt <key-path> <target file> <output directory> - Decrypt target file into output directory, the directory is created if it doesn't exist.\n");
-  printf("\tvaulter gen-key <output-key-path> - Create a random key\n");
-  printf("\tvaulter help - Display this message\n");
+  printf(
+"Encrypt files or directories with ease\n\n"
+"Usage: vaulter <command> [arguments]\n\n"
+"Arguments:\n"
+"\tencrypt <key-path> <target> <output-file>\n"
+"\t\tEncrypt target (file or directory)\n\n"
+"\tdecrypt <key-path> <target-file> <output-directory>\n"
+"\t\tDecrypt target file into output directory\n"
+"\t\t(the directory is created if it doesn't exist)\n\n"
+"\tgen-key <output-key-path>\n"
+"\t\tCreate a random key\n\n"
+"\thelp\n"
+"\t\tDisplay this message\n\n"
+"Options:\n"
+"\t-h --help\tPrint help\n"
+"\t-V --version\tPrint version\n"
+ );
 }
 
 int source_main(int argc, char** argv) {
@@ -127,11 +118,10 @@ int source_main(int argc, char** argv) {
   skey s = {0};
 
   if (action == NULL_STR) {}
-  else if (strcmp(action, "help") == 0) {
+  else if (strcmp(action, "-h") == 0 || strcmp(action, "--help") == 0) {
     help();
     return 0;
-  }
-  else if (strcmp(action, "gen-key") == 0) {
+  } else if (strcmp(action, "gen-key") == 0) {
     srand((unsigned int)time(NULL));
     for (int i = 0; i < 256; i++) {
       s.key[i] = (unsigned char)rand();
@@ -141,31 +131,32 @@ int source_main(int argc, char** argv) {
     }
     char* key_path = shift(&argc, &argv);
     if (key_path == NULL_STR) {
-      printf("Key path not provided\n");
+      fprintf(stderr, "Key path not provided\n");
       return 1;
     }
     save_key(key_path, &s);
     return 0;
-  }
-  else if (strcmp(action, "encrypt") == 0) {
+  } else if (strcmp(action, "encrypt") == 0) {
     char* key_path = shift(&argc, &argv);
     if (key_path == NULL_STR) {
-      printf("Key path not provided\n");
+      fprintf(stderr, "Key path not provided\n");
       return 1;
     }
     load_key(key_path, &s);
     return encrypt(argc, argv, s);
-  }
-  else if (strcmp(action, "decrypt") == 0) {
+  } else if (strcmp(action, "decrypt") == 0) {
     char* key_path = shift(&argc, &argv);
     if (key_path == NULL_STR) {
-      printf("Key path not provided\n");
+      fprintf(stderr, "Key path not provided\n");
       return 1;
     }
     load_key(key_path, &s);
     return decrypt(argc, argv, s);
+  } else if (strcmp(action, "-V") == 0 || strcmp(action, "--version") == 0) {
+    printf("%s\n", VERSION);
+    return 0;
   }
-  printf("Incorrect action\n");
+  fprintf(stderr, "Incorrect action\n");
   return 1;
 }
 
