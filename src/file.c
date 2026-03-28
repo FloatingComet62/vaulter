@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "lib.h"
 
 int check_path_type(const char* path) {
@@ -53,31 +54,31 @@ void handle_input_file(
   fclose(input_fd);
 }
 
-void push(char directories[PATH_MAX][PATH_MAX], int cursor, const char* to_add) {
+void push(char* directories, int cursor, const char* to_add) {
   int i = 0;
   for (; to_add[i] != 0; i++) {
-    directories[cursor][i] = to_add[i];
+    directories[cursor * PATH_MAX + i] = to_add[i];
   }
   while (i < PATH_MAX) {
-    directories[cursor][i++] = 0;
+    directories[cursor * PATH_MAX + i++] = 0;
   }
 }
 
 void handle_input_directory(const char* input_path, int buffer_fd) {
   int cursor = 0;
-  char directories[PATH_MAX][PATH_MAX] = {0};
+  char* directories = malloc(PATH_MAX * PATH_MAX * sizeof(*directories));
   push(directories, cursor, input_path);
   int input_shift = strlen(input_path) + 1;
   while (cursor != -1) {
-    char* path = directories[cursor--];
+    char* path = &directories[(cursor--) * PATH_MAX];
     DIR* dir_ptr = opendir(path);
     if (dir_ptr == NULL) {
-      printf("Couldn't open the directory: %s\n", path);
+      fprintf(stderr, "Couldn't open the directory: %s\n", path);
       continue;
     }
 
     struct dirent* entry_ptr;
-    char full_path[2048];
+    char full_path[PATH_MAX];
     int i = 0;
     for (; path[i] != 0; i++) {
       full_path[i] = path[i];
@@ -104,6 +105,7 @@ void handle_input_directory(const char* input_path, int buffer_fd) {
     }
     closedir(dir_ptr);
   }
+  free(directories);
 }
 
 void handle_input(const char* input_path, int input_type, int buffer_fd) {
@@ -139,7 +141,7 @@ long int read_long_int(unsigned char* c) {
 
 void handle_output(const char* output_path, int buffer_fd) {
   int _;
-  char file_path[2048] = {0};
+  char file_path[PATH_MAX] = {0};
   int i = 0;
   for (; output_path[i] != 0; i++) {
     file_path[i] = output_path[i];
@@ -176,7 +178,7 @@ void handle_output(const char* output_path, int buffer_fd) {
         verify_parent_dirs_exist(file_path);
         f = fopen(file_path, "wb");
         if (f == NULL) {
-          printf("Unable to open file: %s", file_path);
+          fprintf(stderr, "Unable to open file: %s", file_path);
           return;
         }
         read_int_mode = 0;
